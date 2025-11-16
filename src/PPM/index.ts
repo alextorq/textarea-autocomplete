@@ -158,29 +158,3 @@ export class PPMModel {
         return probabilities.get(token) || 0;
     }
 }
-
-// // Пример использования
-// const ppm = new PPM(3);
-//
-// // Обучение модели
-// const trainingTokens = ["hello", "world", "!", "hello", "there", "!"];
-// ppm.train(trainingTokens);
-//
-// // Предсказание вероятностей
-// const context = ["hello"];
-// const probabilities = ppm.predictProbabilities(context);
-// console.log("Probabilities for context ['hello']:");
-// for (const [token, prob] of probabilities) {
-//     console.log(`${token}: ${prob.toFixed(4)}`);
-// }
-//
-// // Получение топ предсказаний
-// const topPredictions = ppm.getTopPredictions(context, 3);
-// console.log("\nTop predictions:");
-// topPredictions.forEach(([token, prob], index) => {
-//     console.log(`${index + 1}. ${token}: ${prob.toFixed(4)}`);
-// });
-//
-// // Вероятность конкретного токена
-// const specificProb = ppm.getTokenProbability(context, "world");
-// console.log(`\nProbability of "world" after "hello": ${specificProb.toFixed(4)}`);
