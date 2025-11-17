@@ -7,6 +7,7 @@ export class Textarea {
     private suggestionBox!: HTMLDivElement;
     private value: string;
     private lastSuggestion: string;
+    private subscribtions: Array<(v: string) => void> = [];
 
     constructor(wrapper: HTMLElement) {
         this.lastSuggestion = ''
@@ -32,20 +33,28 @@ export class Textarea {
 
 
     init() {
-        this.getElement().addEventListener('keydown', (e: KeyboardEvent) => {
+        this.getElement()
+            .addEventListener('keydown', (e: KeyboardEvent) => {
             if (e.code === 'Tab') {
                 e.preventDefault();
 
                 if (this.lastSuggestion) {
                     const start = this.textarea.selectionStart;
                     const end = this.textarea.selectionEnd;
-                    this.textarea.value = this.textarea.value.substring(0, start) + this.lastSuggestion + this.textarea.value.substring(end);
+
+                    const padding = this.value[this.value.length - 1] === ' ' ? '' : ' '
+
+
+                    const value = this.textarea.value.substring(0, start) + padding + this.lastSuggestion + this.textarea.value.substring(end);
+
+                    this.textarea.value = value
+                    this.updateValue(value)
                 }
-            }
-        })
+            }})
+
         this.createSuggestionBox()
         this.getElement().addEventListener('input', (e: Event) => {
-           this.value = (e.target as HTMLTextAreaElement).value
+            this.updateValue((e.target as HTMLTextAreaElement).value)
         })
     }
 
@@ -88,14 +97,19 @@ export class Textarea {
             const first = suggestions[0]
 
             this.lastSuggestion = first
-            this.textareaPlaceHolder.setPlaceholder(this.value.trim() + ` ${first}`)
+
+            const padding = this.value[this.value.length - 1] === ' ' ? '' : ' '
+            this.textareaPlaceHolder.setPlaceholder(this.value + `${padding}${first}`)
         }
     }
 
+    private updateValue(v: string) {
+        this.value = v
+        this.subscribtions.forEach((cb) => cb(v))
+    }
+
     public onInput(callback: (v: string) => void) {
-        this.getElement().addEventListener('input', (e: Event) => {
-            callback((e.target as HTMLTextAreaElement).value)
-        })
+        this.subscribtions.push(callback)
     }
 
 }

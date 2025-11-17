@@ -5,9 +5,9 @@ interface PPMNode {
 }
 
 export class PPMModel {
-    private root: PPMNode;
+    private readonly root: PPMNode;
     private readonly maxOrder: number;
-    private vocabulary: Set<string>;
+    private readonly vocabulary: Set<string>;
 
     constructor(maxOrder: number = 4) {
         this.root = { children: new Map(), count: 0, total: 0 };
