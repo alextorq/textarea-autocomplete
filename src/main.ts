@@ -1,30 +1,33 @@
 import './style.css'
-import {Textarea} from "./textarea";
-import {PPMModel} from "./PPM";
-import {WordTokenizer} from "./tokenizer";
+import {Textarea} from "./ui/textarea";
 import {getArticlesFromWikipedia} from "./api";
+import {modelAbstractFactory} from "./models";
 
 
 async function main() {
     const textarea = new Textarea(document.querySelector('#app')!)
 
-    const tokenizer = new WordTokenizer({
-        keepPunctuation: false,
-    })
-    const data = await getArticlesFromWikipedia(['Почему одни страны богатые, а другие бедные', 'Великая французская революция']).then((articles) => {
+    const articles = [
+        'Почему одни страны богатые, а другие бедные',
+        'Великая французская революция',
+        'История солнечных часов',
+        'История шахмат',
+    ]
+    const data = await getArticlesFromWikipedia(articles).then((articles) => {
         return Array.from(articles.values()).join('\n\n')
     })
 
-    const tokens = tokenizer.tokenize(data)
-    const ppm = new PPMModel(3)
-    ppm.train(tokens)
+    const model = modelAbstractFactory()
+    model.train(data)
+
+    console.log(model)
 
     textarea.onInput((v) => {
-        const inputTokens = tokenizer.tokenize(v)
-        const suggestions = ppm
-            .getTopPredictions(inputTokens, 5)
-            .map((_) => _[0])
-        textarea.setSuggestions(suggestions)
+        const suggestions = model
+            .predict(v)
+
+        const res = suggestions.map((_) => _.word)
+        textarea.setSuggestions(res)
     })
 }
 

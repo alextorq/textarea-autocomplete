@@ -1,9 +1,9 @@
 import {PersistentPlaceholder} from "../placeholder";
 
 export class Textarea {
-    private textarea: HTMLTextAreaElement;
+    private readonly textarea: HTMLTextAreaElement;
     private textareaPlaceHolder: PersistentPlaceholder;
-    private wrapper: HTMLDivElement;
+    private readonly wrapper: HTMLDivElement;
     private suggestionBox!: HTMLDivElement;
     private value: string;
     private lastSuggestion: string;
@@ -43,8 +43,6 @@ export class Textarea {
                     const end = this.textarea.selectionEnd;
 
                     const padding = this.value[this.value.length - 1] === ' ' ? '' : ' '
-
-
                     const value = this.textarea.value.substring(0, start) + padding + this.lastSuggestion + this.textarea.value.substring(end);
 
                     this.textarea.value = value
@@ -93,13 +91,14 @@ export class Textarea {
 
         if (suggestions.length) {
             this.suggestionBox.style.display = 'flex' // Скрыт по умолчанию
-
             const first = suggestions[0]
-
             this.lastSuggestion = first
 
             const padding = this.value[this.value.length - 1] === ' ' ? '' : ' '
             this.textareaPlaceHolder.setPlaceholder(this.value + `${padding}${first}`)
+        }else {
+            this.textareaPlaceHolder.setPlaceholder('')
+            this.suggestionBox.style.display = 'none' // Скрыт по умолчанию
         }
     }
 

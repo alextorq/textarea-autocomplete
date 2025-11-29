@@ -25,12 +25,17 @@ export class PPMModel {
 
         // Обрабатываем все возможные контексты
         for (let i = 0; i < tokens.length; i++) {
+
             for (let order = 1; order <= this.maxOrder; order++) {
                 if (i >= order - 1) {
+
                     const context = tokens.slice(i - order + 1, i);
+                    console.log(i)
+                    // console.log({i, order, context, token: tokens[i]});
                     this.updateModel(context, tokens[i]);
                 }
             }
+
             // Добавляем унарные вероятности (order = 0)
             this.updateModel([], tokens[i]);
         }
@@ -145,7 +150,7 @@ export class PPMModel {
     }
 
     // Вспомогательный метод для получения топ-N предсказаний
-    getTopPredictions(context: string[], topN: number = 5): Array<[string, number]> {
+    predict(context: string[], topN: number = 5): Array<[string, number]> {
         const probabilities = this.predictProbabilities(context);
         return Array.from(probabilities.entries())
             .sort((a, b) => b[1] - a[1])
