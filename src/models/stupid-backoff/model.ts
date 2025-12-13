@@ -1,9 +1,7 @@
 import type {IAutoCompleter, Suggestion} from "../interface.ts";
 import type {ITokenizer, TokenID} from "./tokenizer.ts";
 import type {INGramStore} from "./store.ts";
-import type {SourceValue} from "../source.ts";
-
-export type Stores = Record<SourceValue, INGramStore>
+import {Source, type SourceKey} from "../source.ts";
 
 // Константа Alpha из оригинальной статьи Google (Brants et al., 2007)
 const ALPHA = 0.4;
@@ -14,32 +12,35 @@ const ALPHA = 0.4;
  */
 export class StupidBackoffModel implements IAutoCompleter {
     private tokenizer: ITokenizer;
-    private readonly stores: Stores;
+    private readonly generalStore: INGramStore;
+    private readonly userStore: INGramStore;
     private readonly n: number; // Order (например, 3 для триграмм)
 
-    constructor(order: number, tokenizer: ITokenizer, store: Stores) {
+    constructor(order: number, tokenizer: ITokenizer, generalStore: INGramStore, userStore: INGramStore) {
         this.tokenizer = tokenizer;
-        this.stores = store;
+        this.generalStore = generalStore;
+        this.userStore = userStore;
         this.n = order;
     }
 
-    // private getWeightedCount(ngram: TokenID[], store: INGramStore): number {
-    //     // Получаем частоты из обоих хранилищ
-    //     const countGeneral = this.storeGeneral.getCount(ngram);
-    //     const countPersonal = this.storePersonal.getCount(ngram);
-    //
-    //     // Рассчитываем взвешенную частоту
-    //     // ^C(N) = C_gen(N) + lambda * C_pers(N)
-    //     return countGeneral + this.personalWeight * countPersonal;
-    // }
+    private getStoreBySource(source: SourceKey): INGramStore {
+        switch (source) {
+            case Source.GENERAL:
+                return this.generalStore;
+            case Source.USER:
+                return this.userStore;
+            default:
+                throw new Error(`Unknown source: ${source}`);
+        }
+    }
 
     /**
      * Обучение модели на сыром тексте.
      * Проходит скользящим окном по токенам и сохраняет N-граммы всех порядков (1..N).
      */
-    public train(text: string, source: SourceValue): void {
+    public train(text: string, source: SourceKey): void {
         const tokens = this.tokenizer.tokenize(text);
-        const store = this.stores[source];
+        const store = this.getStoreBySource(source)
 
         // Добавляем маркеры начала и конца, если нужно (здесь упрощено)
         // Для автокомплита часто важно просто скользящее окно.
@@ -88,29 +89,30 @@ export class StupidBackoffModel implements IAutoCompleter {
         }
     }
 
-    private getCandidates(context: TokenID[]): Record<SourceValue,  Set<TokenID>> {
-        // 3. Генерация кандидатов
-        // В "тупом" варианте мы бы перебирали ВЕСЬ словарь. Это O(|V|).
-        // В оптимизированном (нашем) варианте мы смотрим, какие слова встречались
-        // после данного контекста (триграммный контекст).
-        // Если для триграмм ничего нет, backoff заставит нас смотреть биграммный контекст.
-        const candidates = Object.keys(this.stores)
-            .reduce((acc, currentValue) => {
-                acc[currentValue as SourceValue] = new Set<TokenID>();
-                return acc
-             }, {} as Record<SourceValue, Set<TokenID>>);
 
-        // Стратегия поиска кандидатов ("Backoff aware candidate generation"):
-        // Пытаемся найти кандидатов для самого длинного контекста.
-        // Если их нет (или мало), можно "отступить" по контексту, чтобы найти больше вариантов.
-        // Здесь реализуем жадный сбор кандидатов: смотрим контекст длины K, K-1... 1.
+    private getCandidates(context: TokenID[]): {
+        store: INGramStore;
+        candidates: Set<TokenID>
+        context: TokenID[];
+    } | null {
         const currentCtx = [...context];
-        const stores = Object.entries(this.stores)
+
+        const storeLevels = [
+            this.userStore,
+            this.generalStore
+        ]
+
         while (currentCtx.length >= 0) {
-            for (const [sourceKey, store] of stores) {
-                const source = sourceKey as SourceValue;
+            for (const store of storeLevels) {
                 const found = store.getCandidates(currentCtx);
-                found.forEach(_ => candidates[source].add(_));
+
+                if (found.size) {
+                    return {
+                        store: store,
+                        candidates: found,
+                        context: currentCtx
+                    }
+                }
             }
 
             if (currentCtx.length === 0) {
@@ -119,7 +121,7 @@ export class StupidBackoffModel implements IAutoCompleter {
             currentCtx.shift(); // Убираем первое слово (Backoff контекста)
         }
 
-        return candidates
+        return null
     }
 
     /**
@@ -128,6 +130,7 @@ export class StupidBackoffModel implements IAutoCompleter {
     public predict(inputText: string, topK: number = 5): Suggestion[] {
         // 1. Токенизация входной строки
         const tokens = this.tokenizer.tokenize(inputText);
+        const results: Suggestion[] = [];
 
         // 2. Определение контекста
         // Нам нужны последние (N-1) слов, чтобы предсказать N-е слово.
@@ -149,22 +152,17 @@ export class StupidBackoffModel implements IAutoCompleter {
         }
 
         const candidatesByStores = this.getCandidates(context);
+        if (!candidatesByStores) return results
 
-        // Если совсем ничего не нашли (редкий случай для большого корпуса), можно добавить топ униграмм.
-        // 4. Оценка (Scoring) каждого кандидата
-        const results: Suggestion[] = [];
+        const source = candidatesByStores.store
+        const candidates = candidatesByStores.candidates
 
-        for (const sourceKey of Object.keys(candidatesByStores)) {
-            const source = this.stores[sourceKey as SourceValue];
-            const candidates = candidatesByStores[sourceKey as SourceValue];
-
-            for (const candidateId of candidates) {
-                const score = this.getScore(source, candidateId, context);
-                results.push({
-                    word: this.tokenizer.getWord(candidateId),
-                    score: score
-                });
-            }
+        for (const candidateId of candidates) {
+            const score = this.getScore(source, candidateId, context);
+            results.push({
+                word: this.tokenizer.getWord(candidateId),
+                score: score
+            });
         }
 
         // 5. Сортировка и выдача Top-K

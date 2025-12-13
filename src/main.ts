@@ -27,7 +27,7 @@ async function main() {
     ]
 
     const data = await getArticlesFromWikipedia(articles)
-    model.train(data, Source.WIKIPEDIA)
+    model.train(data, Source.GENERAL)
 }
 
 

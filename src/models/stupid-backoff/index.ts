@@ -1,15 +1,6 @@
-import {type Stores, StupidBackoffModel} from "./model.ts";
+import {StupidBackoffModel} from "./model.ts";
 import {AdvancedTokenizer} from "./tokenizer.ts";
 import {NGramStore} from "./store.ts";
-import {Source} from "../source.ts";
-
-
-const createStores = (): Stores => {
-    return {
-        [Source.CUSTOM_TEXT]: new NGramStore(),
-        [Source.WIKIPEDIA]: new NGramStore(),
-    }
-}
 
 /**
  * STUPID BACKOFF AUTOCOMPLETE IMPLEMENTATION
@@ -25,5 +16,5 @@ const createStores = (): Stores => {
  */
 
 export const getStupidBackoffModel = () =>{
-    return new StupidBackoffModel(4, new AdvancedTokenizer(), createStores()); // Триграммы
+    return new StupidBackoffModel(4, new AdvancedTokenizer(), new NGramStore(), new NGramStore()); // Триграммы
 };

@@ -1,6 +1,6 @@
 export const Source = {
-    WIKIPEDIA: "wikipedia",
-    CUSTOM_TEXT: "custom_text"
+    GENERAL: "GENERAL",
+    USER: "USER"
 } as const;
 
 export type SourceKey = keyof typeof Source;
