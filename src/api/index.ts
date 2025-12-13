@@ -1,4 +1,4 @@
-export const getArticlesFromWikipedia = async (titles: string[]): Promise<Map<string, string>> => {
+export const getArticlesFromWikipedia = async (titles: string[]) => {
     const endpoint = 'https://ru.wikipedia.org/w/api.php';
 
     const articlesMap = new Map<string, string>();
@@ -33,5 +33,5 @@ export const getArticlesFromWikipedia = async (titles: string[]): Promise<Map<st
         }
     }
 
-    return articlesMap;
+    return Array.from(articlesMap.values()).join('\n\n')
 };

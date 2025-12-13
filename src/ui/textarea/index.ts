@@ -8,6 +8,7 @@ export class Textarea {
     private value: string;
     private lastSuggestion: string;
     private subscribtions: Array<(v: string) => void> = [];
+    private subscribtionsOnStartNextWord: Array<(v: string) => void> = [];
 
     constructor(wrapper: HTMLElement) {
         this.lastSuggestion = ''
@@ -39,11 +40,10 @@ export class Textarea {
                 e.preventDefault();
 
                 if (this.lastSuggestion) {
-                    const start = this.textarea.selectionStart;
-                    const end = this.textarea.selectionEnd;
-
+                    // const start = this.textarea.selectionStart;
+                    // const end = this.textarea.selectionEnd;
                     const padding = this.value[this.value.length - 1] === ' ' ? '' : ' '
-                    const value = this.textarea.value.substring(0, start) + padding + this.lastSuggestion + this.textarea.value.substring(end);
+                    const value = this.textarea.value + padding + this.lastSuggestion + ' ';
 
                     this.textarea.value = value
                     this.updateValue(value)
@@ -51,6 +51,7 @@ export class Textarea {
             }})
 
         this.createSuggestionBox()
+
         this.getElement().addEventListener('input', (e: Event) => {
             this.updateValue((e.target as HTMLTextAreaElement).value)
         })
@@ -105,10 +106,17 @@ export class Textarea {
     private updateValue(v: string) {
         this.value = v
         this.subscribtions.forEach((cb) => cb(v))
+        if (v.endsWith(' ') || v.length === 0) {
+            this.subscribtionsOnStartNextWord.forEach((cb) => cb(v))
+        }
     }
 
     public onInput(callback: (v: string) => void) {
         this.subscribtions.push(callback)
+    }
+
+    public onStartNextWord(callback: (v: string) => void) {
+        this.subscribtionsOnStartNextWord.push(callback)
     }
 
 }

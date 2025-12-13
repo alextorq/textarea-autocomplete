@@ -1,5 +1,7 @@
+import {type SourceValue} from "./source.ts";
+
 export interface IAutoCompleter {
-    train(text: string): void;
+    train(text: string, source: SourceValue): void;
     predict(context: string, topK?: number): Suggestion[];
 }
 

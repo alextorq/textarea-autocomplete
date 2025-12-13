@@ -13,8 +13,18 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+:root {
+    --text-color: black;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text-color: white;
+    }
+}
+
 textarea {
-    color: black;
+    color: var(--text-color);
 }
 
 a {
