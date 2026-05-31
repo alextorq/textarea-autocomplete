@@ -183,9 +183,6 @@ export class PPMModel {
         // Вероятность ухода на уровень ниже
         const escapeProb = distinct / denominator;
 
-        // Доля вероятности, которая распределяется на этом уровне
-        const nodeProbMass = 1.0 - escapeProb;
-
         // Проходим по всем токенам, известным в этом контексте
         for (const [token, count] of node.counts) {
             // Exclusion: Если токен уже был предсказан на более высоком уровне, пропускаем его.
