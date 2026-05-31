@@ -6,6 +6,8 @@ inline "ghost text" — press **Tab** to accept the top suggestion.
 
 The model is trained on the fly from Russian Wikipedia articles and runs entirely in the browser.
 
+**🔗 Live demo: https://alextorq.github.io/textarea-autocomplete/**
+
 ![Textarea with suggestions](./images/textarea-suggestions.png)
 
 ## How it works
