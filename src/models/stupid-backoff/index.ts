@@ -16,5 +16,5 @@ import {NGramStore} from "./store.ts";
  */
 
 export const getStupidBackoffModel = () =>{
-    return new StupidBackoffModel(4, new AdvancedTokenizer(), new NGramStore(), new NGramStore()); // Триграммы
+    return new StupidBackoffModel(4, new AdvancedTokenizer(), new NGramStore(), new NGramStore()); // 4-граммы
 };
