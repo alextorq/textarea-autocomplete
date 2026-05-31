@@ -30,8 +30,6 @@ export class PPMModel {
                 if (i >= order - 1) {
 
                     const context = tokens.slice(i - order + 1, i);
-                    console.log(i)
-                    // console.log({i, order, context, token: tokens[i]});
                     this.updateModel(context, tokens[i]);
                 }
             }
