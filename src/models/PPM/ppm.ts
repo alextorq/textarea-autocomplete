@@ -113,7 +113,7 @@ export class PPM {
      * Backoff weighting rule
      * Here: simple normalized fallback (can be replaced by more robust scheme)
      */
-    private backoffWeight(k: number, ctx: string[]): number {
+    private backoffWeight(_k: number, _ctx: string[]): number {
         return 1.0; // Simplified: all orders equal weight (but probability balances via escape)
     }
 
